@@ -1,0 +1,1436 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agenda Runner — Solo lectura</title>
+  <style>
+    :root{
+      --bg:#fafafa; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
+      --primary:#111827; --secondary:#f3f4f6;
+      --shadow:0 1px 2px rgba(0,0,0,.06);
+      --radius:18px;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:var(--sans); color:var(--text); background:linear-gradient(#fafafa,#fff)}
+    .container{max-width:1180px; margin:0 auto; padding:20px}
+    .header{display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; justify-content:space-between; margin-bottom:16px}
+    .brand{display:flex; gap:12px; align-items:center}
+    .logo{width:44px; height:44px; border-radius:16px; background:#000; color:#fff; display:grid; place-items:center; box-shadow:var(--shadow)}
+    h1{margin:0; font-size:28px; letter-spacing:-.02em}
+    .subtitle{margin:2px 0 0; color:var(--muted); font-size:13px}
+
+    .btn{appearance:none; border:1px solid var(--border); background:#fff; color:var(--text);
+      padding:10px 12px; border-radius:999px; cursor:pointer; font-weight:800; font-size:13px;
+      display:inline-flex; align-items:center; gap:8px; box-shadow:var(--shadow)}
+    .btn.secondary{background:var(--secondary)}
+    .btn.primary{background:var(--primary); color:#fff; border-color:var(--primary)}
+    .btn.small{padding:7px 10px; font-size:12px; box-shadow:none}
+
+    .grid{display:grid; grid-template-columns: 1fr; gap:14px}
+    @media(min-width:980px){.grid{grid-template-columns: 380px 1fr}}
+
+    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow)}
+    .card .hd{padding:14px 16px 10px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
+    .card .hd h2{margin:0; font-size:14px}
+    .card .bd{padding:16px}
+
+    label{display:block; font-size:13px; font-weight:900; margin-bottom:6px}
+    .input, select{width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:999px; outline:none; font-size:13px; background:#fff}
+
+    .row{display:grid; grid-template-columns: 1fr; gap:10px}
+    @media(min-width:480px){.row.two{grid-template-columns:1fr 1fr}}
+
+    .sep{height:1px; background:var(--border); margin:14px 0}
+
+    .badge{display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; font-size:12px; font-weight:900; border:1px solid var(--border); background:#fff}
+    .badge.secondary{background:var(--secondary)}
+
+    .stats{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    .stat{border:1px solid var(--border); border-radius:var(--radius); padding:12px}
+    .stat .k{font-size:11px; color:var(--muted)}
+    .stat .v{font-size:18px; font-weight:900; margin-top:2px}
+
+    .tabs{display:flex; gap:8px; padding:0 16px 10px}
+    .tab{border:1px solid var(--border); background:#fff; padding:8px 12px; border-radius:999px; cursor:pointer; font-weight:900; font-size:12px}
+    .tab.active{background:var(--primary); border-color:var(--primary); color:#fff}
+
+    .tableWrap{overflow:auto; border:1px solid var(--border); border-radius:var(--radius)}
+    table{width:100%; border-collapse:collapse; font-size:13px}
+    thead{background:#f8fafc}
+    th, td{padding:12px; text-align:left; vertical-align:top}
+    tbody tr{border-top:1px solid var(--border)}
+    tbody tr:hover{background:#f9fafb}
+    .muted{color:var(--muted); font-size:12px}
+
+    .cards{display:grid; grid-template-columns:1fr; gap:12px}
+    @media(min-width:720px){.cards{grid-template-columns:1fr 1fr}}
+
+    .raceTitle{font-weight:900; line-height:1.25}
+
+    .rangeBox{border:1px solid var(--border); border-radius:var(--radius); padding:12px; background:#fff}
+    .rangeTop{display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:8px}
+    .rangeTop strong{color:var(--text)}
+    .ranges{position:relative; height:28px}
+    .ranges input[type="range"]{position:absolute; inset:0; width:100%}
+
+    .footer{margin-top:22px; color:var(--muted); font-size:12px; padding-bottom:10px}
+    .hint{font-size:12px; color:var(--muted); margin-top:8px}
+    .miniBtns{display:flex; flex-wrap:wrap; gap:8px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"><span>🏁</span></div>
+        <div>
+          <h1>Agenda Runner</h1>
+          <div class="subtitle">Solo lectura · generado desde tu archivo de Correbirras. Se muestran solo carreras con datos completos (sin “?” ni campos vacíos).</div>
+        </div>
+      </div>
+      <div>
+        <button class="btn secondary" id="btnReset">Reset filtros</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="hd"><h2>Filtros</h2><span class="badge secondary" id="badgeObjective">Objetivo: 6.0 km</span></div>
+        <div class="bd">
+          <div style="margin-bottom:12px">
+            <label for="q">Buscar</label>
+            <input class="input" id="q" placeholder="Murcia, 5K, nocturna, trail..." />
+          </div>
+
+          <div class="row two" style="margin-bottom:12px">
+            <div>
+              <label for="surface">Tipo / suelo</label>
+              <select id="surface">
+                <option value="all">Todos</option>
+              </select>
+            </div>
+            <div>
+              <label for="province">Provincia</label>
+              <select id="province">
+                <option value="all">Todas</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom:8px">
+            <label>Fechas</label>
+            <div class="row two">
+              <div>
+                <div class="muted" style="margin:0 0 6px 6px">Desde</div>
+                <input class="input" type="date" id="from" />
+              </div>
+              <div>
+                <div class="muted" style="margin:0 0 6px 6px">Hasta</div>
+                <input class="input" type="date" id="to" />
+              </div>
+            </div>
+          </div>
+
+          <div class="sep"></div>
+
+          <div>
+            <label>Distancia similar</label>
+            <div class="miniBtns" style="margin-bottom:10px">
+              <button class="btn small" data-target="5">5k</button>
+              <button class="btn small primary" data-target="6">6k</button>
+              <button class="btn small" data-target="7">7k</button>
+              <button class="btn small" data-target="8">8k</button>
+              <button class="btn small" data-target="10">10k</button>
+              <button class="btn small" data-target="21.1">21.1k</button>
+            </div>
+            <div class="rangeBox">
+              <div class="rangeTop">
+                <span>0.5 km</span>
+                <strong id="rangeLabel">4.0–8.0 km</strong>
+                <span>60.0 km</span>
+              </div>
+              <div class="ranges">
+                <input type="range" min="0.5" max="60" step="0.1" id="rMin" value="4.0" />
+                <input type="range" min="0.5" max="60" step="0.1" id="rMax" value="8.0" style="opacity:.7" />
+              </div>
+              <div class="hint">Solo se muestran carreras con alguna distancia dentro del rango.</div>
+            </div>
+          </div>
+
+          <div class="sep"></div>
+
+          <div class="stats">
+            <div class="stat"><div class="k">Total (completas)</div><div class="v" id="sTotal">0</div></div>
+            <div class="stat"><div class="k">Coinciden</div><div class="v" id="sMatch">0</div></div>
+            <div class="stat"><div class="k">En rango</div><div class="v" id="sSimilar">0</div></div>
+            <div class="stat"><div class="k">Cobertura</div><div class="v" id="sCoverage">-</div></div>
+          </div>
+          <div class="hint" id="coverageHint"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="hd"><h2>Resultados</h2><span class="badge" id="resultsBadge">0 carreras</span></div>
+        <div class="tabs">
+          <button class="tab active" id="tabTable">Tabla</button>
+          <button class="tab" id="tabCards">Tarjetas</button>
+        </div>
+        <div class="bd" style="padding-top:6px">
+          <div id="viewTable">
+            <div class="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Carrera</th>
+                    <th>Tipo</th>
+                    <th>Lugar</th>
+                    <th>Distancia</th>
+                    <th>Precio</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="viewCards" style="display:none">
+            <div class="cards" id="cards"></div>
+          </div>
+          <div class="hint" style="margin-top:12px">Sin botones de edición. Ideal para publicarla en OneDrive y regenerarla cada año.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Generado automáticamente desde el HTML aportado. Se excluyen filas con fecha/hora no concretas o con “?” en alguno de los campos principales.</div>
+  </div>
+
+<script>
+(() => {
+  const SURFACES = ["Asfalto","Mixta","Montaña","Obstáculos","Pista","Otra"];
+
+  const seedRaces = [
+  {
+    "id": "r1",
+    "fecha": "01-05-25",
+    "hora": "09:00",
+    "carrera": "XI Ruta y Trail Benéfico AFACMUR Pliego",
+    "tipo": "Montaña",
+    "localidad": "Pliego",
+    "provincia": "Murcia",
+    "distancia": "22K / 15K / 9K / 6K",
+    "precio": "10-26"
+  },
+  {
+    "id": "r2",
+    "fecha": "04-04-26",
+    "hora": "10:45",
+    "carrera": "XIV Carrera Popular de La Azohía",
+    "tipo": "Mixta",
+    "localidad": "La Azohía",
+    "provincia": "Murcia",
+    "distancia": "10K",
+    "precio": "13"
+  },
+  {
+    "id": "r3",
+    "fecha": "11-04-26",
+    "hora": "05:00",
+    "carrera": "Desafío Calar del Río Mundo 2026",
+    "tipo": "Montaña",
+    "localidad": "Riópar",
+    "provincia": "Albacete",
+    "distancia": "70K / 40K / 25K / 15K",
+    "precio": "9-85"
+  },
+  {
+    "id": "r4",
+    "fecha": "11-04-26",
+    "hora": "06:00",
+    "carrera": "XVI Botamarges",
+    "tipo": "Montaña",
+    "localidad": "Forna",
+    "provincia": "Alicante",
+    "distancia": "64K / 21K / 13K",
+    "precio": "23-70"
+  },
+  {
+    "id": "r5",
+    "fecha": "11-04-26",
+    "hora": "17:00",
+    "carrera": "VII 10K Ciudad de Yecla",
+    "tipo": "Asfalto",
+    "localidad": "Yecla",
+    "provincia": "Murcia",
+    "distancia": "10K / 5K",
+    "precio": "5-15"
+  },
+  {
+    "id": "r6",
+    "fecha": "11-04-26",
+    "hora": "17:30",
+    "carrera": "III Correlloba",
+    "tipo": "Montaña",
+    "localidad": "Forna",
+    "provincia": "Alicante",
+    "distancia": "10K / 7.5K",
+    "precio": "5-12"
+  },
+  {
+    "id": "r7",
+    "fecha": "11-04-26",
+    "hora": "17:30",
+    "carrera": "XXII Media Maratón Villa de La Roda",
+    "tipo": "Asfalto",
+    "localidad": "La Roda",
+    "provincia": "Albacete",
+    "distancia": "21.1K / 6.5K",
+    "precio": "12-15"
+  },
+  {
+    "id": "r8",
+    "fecha": "12-04-26",
+    "hora": "08:30",
+    "carrera": "XIII Media Maratón de Águilas y 7K Promoción",
+    "tipo": "Asfalto",
+    "localidad": "Águilas",
+    "provincia": "Murcia",
+    "distancia": "21K / 12K / 7K",
+    "precio": "10-17"
+  },
+  {
+    "id": "r9",
+    "fecha": "12-04-26",
+    "hora": "08:30",
+    "carrera": "Medio Maratón Almería 2026",
+    "tipo": "Asfalto",
+    "localidad": "Almería",
+    "provincia": "Almería",
+    "distancia": "21K / 10K",
+    "precio": "21-38"
+  },
+  {
+    "id": "r10",
+    "fecha": "12-04-26",
+    "hora": "09:00",
+    "carrera": "III Non Stop Lorca x Triana 300K",
+    "tipo": "Asfalto",
+    "localidad": "Lorca",
+    "provincia": "Murcia",
+    "distancia": "25K / 12K / 6K / 5K",
+    "precio": "25"
+  },
+  {
+    "id": "r11",
+    "fecha": "12-04-26",
+    "hora": "10:00",
+    "carrera": "IX Carrera Popular Villa de Benejúzar 5K y 10K",
+    "tipo": "Asfalto",
+    "localidad": "Benejúzar",
+    "provincia": "Alicante",
+    "distancia": "10K / 5K",
+    "precio": "14"
+  },
+  {
+    "id": "r12",
+    "fecha": "18-04-26",
+    "hora": "08:00",
+    "carrera": "Trail El Aguilón",
+    "tipo": "Montaña",
+    "localidad": "Pulpí",
+    "provincia": "Almería",
+    "distancia": "46K / 22K / 17K",
+    "precio": "12-45"
+  },
+  {
+    "id": "r13",
+    "fecha": "18-04-26",
+    "hora": "08:05",
+    "carrera": "XV Ruta de las Fortalezas",
+    "tipo": "Mixta",
+    "localidad": "Cartagena",
+    "provincia": "Murcia",
+    "distancia": "53K / 27K",
+    "precio": "45"
+  },
+  {
+    "id": "r14",
+    "fecha": "18-04-26",
+    "hora": "17:30",
+    "carrera": "II Carrera Memorial Esteban Sigüenza",
+    "tipo": "Asfalto",
+    "localidad": "Albatera",
+    "provincia": "Alicante",
+    "distancia": "5K",
+    "precio": "11"
+  },
+  {
+    "id": "r15",
+    "fecha": "19-04-26",
+    "hora": "09:00",
+    "carrera": "VII Nerpio Juglans Trail",
+    "tipo": "Montaña",
+    "localidad": "Nerpio",
+    "provincia": "Albacete",
+    "distancia": "22K / 14.5K",
+    "precio": "17-22"
+  },
+  {
+    "id": "r16",
+    "fecha": "19-04-26",
+    "hora": "09:00",
+    "carrera": "V CxM Sabina Milenaria",
+    "tipo": "Montaña",
+    "localidad": "Chirivel",
+    "provincia": "Almería",
+    "distancia": "25K / 16K",
+    "precio": "17-26"
+  },
+  {
+    "id": "r17",
+    "fecha": "19-04-26",
+    "hora": "09:30",
+    "carrera": "XXXVIII Media Maratón Ciudad de Lorca y XVI Carrera Saludable",
+    "tipo": "Asfalto",
+    "localidad": "Lorca",
+    "provincia": "Murcia",
+    "distancia": "21K / 14K / 7K",
+    "precio": "8-30"
+  },
+  {
+    "id": "r18",
+    "fecha": "19-04-26",
+    "hora": "09:30",
+    "carrera": "IV Trail, Marcha y Milla Solidaria CEIP Miguel Ortuño",
+    "tipo": "Montaña",
+    "localidad": "Yecla",
+    "provincia": "Murcia",
+    "distancia": "11K / Otras",
+    "precio": "6-17"
+  },
+  {
+    "id": "r19",
+    "fecha": "19-04-26",
+    "hora": "09:30",
+    "carrera": "I Carrera Sayma Campohermoso",
+    "tipo": "Asfalto",
+    "localidad": "Níjar",
+    "provincia": "Almería",
+    "distancia": "10K / 5K",
+    "precio": "5-15"
+  },
+  {
+    "id": "r20",
+    "fecha": "19-04-26",
+    "hora": "10:00",
+    "carrera": "III Carrera Solidaria Mercamurcia",
+    "tipo": "Asfalto",
+    "localidad": "El Palmar",
+    "provincia": "Murcia",
+    "distancia": "5K / 2.5K",
+    "precio": "5-10"
+  },
+  {
+    "id": "r21",
+    "fecha": "19-04-26",
+    "hora": "10:00",
+    "carrera": "XI Carrera Popular Villa de Lorquí",
+    "tipo": "Asfalto",
+    "localidad": "Lorquí",
+    "provincia": "Murcia",
+    "distancia": "10K / 5K / 4.5K",
+    "precio": "7-18"
+  },
+  {
+    "id": "r22",
+    "fecha": "19-04-26",
+    "hora": "10:00",
+    "carrera": "IV Carrera de Empresas",
+    "tipo": "Asfalto",
+    "localidad": "Elche",
+    "provincia": "Alicante",
+    "distancia": "7K",
+    "precio": "10-17"
+  },
+  {
+    "id": "r23",
+    "fecha": "25-04-26",
+    "hora": "10:00",
+    "carrera": "Joma Costa Trail Aguilas 2026",
+    "tipo": "Montaña",
+    "localidad": "Murcia",
+    "provincia": "Murcia",
+    "distancia": "18.8K / 12.5K",
+    "precio": "0-29"
+  },
+  {
+    "id": "r24",
+    "fecha": "25-04-26",
+    "hora": "10:30",
+    "carrera": "Desafío Murcia Río 2026",
+    "tipo": "Obstáculos",
+    "localidad": "Murcia",
+    "provincia": "Murcia",
+    "distancia": "6K",
+    "precio": "31-40"
+  },
+  {
+    "id": "r25",
+    "fecha": "25-04-26",
+    "hora": "18:00",
+    "carrera": "II Cross Solidario Vedruna",
+    "tipo": "Asfalto",
+    "localidad": "La Unión",
+    "provincia": "Murcia",
+    "distancia": "5K / 2K / 1K",
+    "precio": "4-12"
+  },
+  {
+    "id": "r26",
+    "fecha": "26-04-26",
+    "hora": "08:30",
+    "carrera": "V Copa Trail de Bienservida",
+    "tipo": "Montaña",
+    "localidad": "Bienservida",
+    "provincia": "Albacete",
+    "distancia": "31K",
+    "precio": "22"
+  },
+  {
+    "id": "r27",
+    "fecha": "26-04-26",
+    "hora": "09:00",
+    "carrera": "VI Carrera Popular Los Tres Castillos de Monteagudo",
+    "tipo": "Mixta",
+    "localidad": "Monteagudo",
+    "provincia": "Murcia",
+    "distancia": "7.5K",
+    "precio": "5"
+  },
+  {
+    "id": "r28",
+    "fecha": "26-04-26",
+    "hora": "09:00",
+    "carrera": "I Legendaria Trail Ulea",
+    "tipo": "Montaña",
+    "localidad": "Ulea",
+    "provincia": "Murcia",
+    "distancia": "22K / 14K",
+    "precio": "20-28"
+  },
+  {
+    "id": "r29",
+    "fecha": "26-04-26",
+    "hora": "09:00",
+    "carrera": "1er Cross Trail Puntes de Gosálvez",
+    "tipo": "Mixta",
+    "localidad": "El Campello",
+    "provincia": "Alicante",
+    "distancia": "10K",
+    "precio": "13-16"
+  },
+  {
+    "id": "r30",
+    "fecha": "26-04-26",
+    "hora": "09:30",
+    "carrera": "Villanera Trail 2026",
+    "tipo": "Montaña",
+    "localidad": "Villena",
+    "provincia": "Alicante",
+    "distancia": "21K / 10K / 5K",
+    "precio": "10-20"
+  },
+  {
+    "id": "r31",
+    "fecha": "26-04-26",
+    "hora": "09:30",
+    "carrera": "II Carrera Trail de Bienservida Iniciación",
+    "tipo": "Montaña",
+    "localidad": "Bienservida",
+    "provincia": "Albacete",
+    "distancia": "13K",
+    "precio": "9-12"
+  },
+  {
+    "id": "r32",
+    "fecha": "26-04-26",
+    "hora": "09:30",
+    "carrera": "X Carrera Trail de Bienservida",
+    "tipo": "Montaña",
+    "localidad": "Bienservida",
+    "provincia": "Albacete",
+    "distancia": "21K",
+    "precio": "9-12"
+  },
+  {
+    "id": "r33",
+    "fecha": "26-04-26",
+    "hora": "10:00",
+    "carrera": "VII Carrera y Marcha ONG Cirugía Solidaria 5K y 10K",
+    "tipo": "Asfalto",
+    "localidad": "Murcia",
+    "provincia": "Murcia",
+    "distancia": "10K / 5K",
+    "precio": "8-15"
+  },
+  {
+    "id": "r34",
+    "fecha": "26-04-26",
+    "hora": "10:00",
+    "carrera": "Mula en marcha contra la leucemia",
+    "tipo": "Asfalto",
+    "localidad": "Murcia",
+    "provincia": "Murcia",
+    "distancia": "10K",
+    "precio": "10"
+  },
+  {
+    "id": "r35",
+    "fecha": "26-04-26",
+    "hora": "10:00",
+    "carrera": "X Carrera Popular de Jacarilla",
+    "tipo": "Asfalto",
+    "localidad": "Jacarilla",
+    "provincia": "Alicante",
+    "distancia": "10K / 5K",
+    "precio": "12-15"
+  },
+  {
+    "id": "r36",
+    "fecha": "26-04-26",
+    "hora": "10:30",
+    "carrera": "Ruta \"Autismo somos todos 2026\"",
+    "tipo": "Asfalto",
+    "localidad": "Cartagena",
+    "provincia": "Murcia",
+    "distancia": "5K",
+    "precio": "6-12"
+  },
+  {
+    "id": "r37",
+    "fecha": "30-04-26",
+    "hora": "11:00",
+    "carrera": "18ª Carrera Popular Solidaria Universidad de Murcia",
+    "tipo": "Asfalto",
+    "localidad": "Espinardo",
+    "provincia": "Murcia",
+    "distancia": "4.5K",
+    "precio": "2"
+  },
+  {
+    "id": "r38",
+    "fecha": "01-05-26",
+    "hora": "09:30",
+    "carrera": "IV Locos por el Running Santo Ángel",
+    "tipo": "Asfalto",
+    "localidad": "Santo Ángel",
+    "provincia": "Murcia",
+    "distancia": "6K / 3K",
+    "precio": "10-15"
+  },
+  {
+    "id": "r39",
+    "fecha": "01-05-26",
+    "hora": "09:55",
+    "carrera": "44ª Carrera Pedestre Ceutí 1 de Mayo",
+    "tipo": "Asfalto",
+    "localidad": "Ceutí",
+    "provincia": "Murcia",
+    "distancia": "10K / 5K",
+    "precio": "4-10"
+  },
+  {
+    "id": "r40",
+    "fecha": "02-05-26",
+    "hora": "10:00",
+    "carrera": "Granja Run Fest",
+    "tipo": "Asfalto",
+    "localidad": "Granja De Rocamora",
+    "provincia": "Alicante",
+    "distancia": "10K / 5K",
+    "precio": "0-13"
+  },
+  {
+    "id": "r41",
+    "fecha": "03-05-26",
+    "hora": "09:00",
+    "carrera": "X CxM Sierro",
+    "tipo": "Montaña",
+    "localidad": "Sierro",
+    "provincia": "Almería",
+    "distancia": "25K / 14K",
+    "precio": "15-22"
+  },
+  {
+    "id": "r42",
+    "fecha": "03-05-26",
+    "hora": "09:30",
+    "carrera": "V Carrera Popular Heredades",
+    "tipo": "Asfalto",
+    "localidad": "Heredades",
+    "provincia": "Alicante",
+    "distancia": "6K",
+    "precio": "2-12"
+  },
+  {
+    "id": "r43",
+    "fecha": "08-05-26",
+    "hora": "19:00",
+    "carrera": "VII Cross Nocturno Salesianos",
+    "tipo": "Asfalto",
+    "localidad": "Alcoi",
+    "provincia": "Alicante",
+    "distancia": "7K",
+    "precio": "10-14"
+  },
+  {
+    "id": "r44",
+    "fecha": "09-05-26",
+    "hora": "07:00",
+    "carrera": "Trail de Primavera 2026",
+    "tipo": "Montaña",
+    "localidad": "Confrides",
+    "provincia": "Alicante",
+    "distancia": "43K / 24K",
+    "precio": "32-45"
+  },
+  {
+    "id": "r45",
+    "fecha": "09-05-26",
+    "hora": "18:30",
+    "carrera": "XLIII Cross Antonio Amorós - Crisnova Vidrio",
+    "tipo": "Asfalto",
+    "localidad": "Caudete",
+    "provincia": "Albacete",
+    "distancia": "10K",
+    "precio": "7-10"
+  },
+  {
+    "id": "r46",
+    "fecha": "09-05-26",
+    "hora": "18:30",
+    "carrera": "XLIII Cross Antonio Amorós - Crisnova Vidrio- Iniciación",
+    "tipo": "Asfalto",
+    "localidad": "Caudete",
+    "provincia": "Albacete",
+    "distancia": "6K",
+    "precio": "7-10"
+  },
+  {
+    "id": "r47",
+    "fecha": "09-05-26",
+    "hora": "19:30",
+    "carrera": "VIII Night Run \"Arx Asdrubalis\"",
+    "tipo": "Asfalto",
+    "localidad": "Cartagena",
+    "provincia": "Murcia",
+    "distancia": "10K / 2K",
+    "precio": "0-16"
+  },
+  {
+    "id": "r48",
+    "fecha": "10-05-26",
+    "hora": "08:30",
+    "carrera": "V Copa Trail de Bogarra",
+    "tipo": "Montaña",
+    "localidad": "Bogarra",
+    "provincia": "Albacete",
+    "distancia": "34K",
+    "precio": "16-22"
+  },
+  {
+    "id": "r49",
+    "fecha": "10-05-26",
+    "hora": "09:30",
+    "carrera": "Crazy Run Archena 2026",
+    "tipo": "Obstáculos",
+    "localidad": "Archena",
+    "provincia": "Murcia",
+    "distancia": "5K",
+    "precio": "29"
+  },
+  {
+    "id": "r50",
+    "fecha": "10-05-26",
+    "hora": "09:30",
+    "carrera": "XV Memorial Remigio López. El Palmar en marcha contra el cáncer",
+    "tipo": "Asfalto",
+    "localidad": "El Palmar",
+    "provincia": "Murcia",
+    "distancia": "5K",
+    "precio": "8-12"
+  },
+  {
+    "id": "r51",
+    "fecha": "10-05-26",
+    "hora": "10:00",
+    "carrera": "1ª Carrera Híbrida Fundación Martín Álvarez Muelas",
+    "tipo": "Obstáculos",
+    "localidad": "Churra",
+    "provincia": "Murcia",
+    "distancia": "3K",
+    "precio": "40"
+  },
+  {
+    "id": "r52",
+    "fecha": "10-05-26",
+    "hora": "10:00",
+    "carrera": "I Carrera Popular Corre para Dar Vida",
+    "tipo": "Asfalto",
+    "localidad": "Murcia",
+    "provincia": "Murcia",
+    "distancia": "10K / 5K",
+    "precio": "5"
+  },
+  {
+    "id": "r53",
+    "fecha": "10-05-26",
+    "hora": "10:00",
+    "carrera": "VII Cross Solidario \"Doble Amor\" #Benidorm",
+    "tipo": "Mixta",
+    "localidad": "Benidorm",
+    "provincia": "Alicante",
+    "distancia": "5K",
+    "precio": "13"
+  },
+  {
+    "id": "r54",
+    "fecha": "16-05-26",
+    "hora": "19:00",
+    "carrera": "XXV Medio Maratón de Almansa",
+    "tipo": "Asfalto",
+    "localidad": "Almansa",
+    "provincia": "Albacete",
+    "distancia": "21K",
+    "precio": "12–15"
+  },
+  {
+    "id": "r55",
+    "fecha": "16-05-26",
+    "hora": "19:30",
+    "carrera": "Monda Trail 2026",
+    "tipo": "Montaña",
+    "localidad": "Puerto Lumbreras",
+    "provincia": "Murcia",
+    "distancia": "20.3K / 10.5K",
+    "precio": "10-29"
+  },
+  {
+    "id": "r56",
+    "fecha": "16-05-26",
+    "hora": "22:00",
+    "carrera": "Elche Night Race 2026",
+    "tipo": "Asfalto",
+    "localidad": "Elche",
+    "provincia": "Alicante",
+    "distancia": "10K / 5K",
+    "precio": "16-20"
+  },
+  {
+    "id": "r57",
+    "fecha": "17-05-26",
+    "hora": "08:30",
+    "carrera": "VII Guadalupe Trail",
+    "tipo": "Montaña",
+    "localidad": "Guadalupe",
+    "provincia": "Murcia",
+    "distancia": "14K / 10K / 8.5K / 7K",
+    "precio": "3-20"
+  },
+  {
+    "id": "r58",
+    "fecha": "17-05-26",
+    "hora": "09:00",
+    "carrera": "Duna Trail",
+    "tipo": "Montaña",
+    "localidad": "Los Belones",
+    "provincia": "Murcia",
+    "distancia": "17K / 8K",
+    "precio": "15-24"
+  },
+  {
+    "id": "r59",
+    "fecha": "17-05-26",
+    "hora": "09:30",
+    "carrera": "XIII Carrera Popular Villa de Alguazas",
+    "tipo": "Asfalto",
+    "localidad": "Alguazas",
+    "provincia": "Murcia",
+    "distancia": "10K / 5K",
+    "precio": "1-14"
+  },
+  {
+    "id": "r60",
+    "fecha": "17-05-26",
+    "hora": "10:00",
+    "carrera": "XXVIII Carrera Popular Formentera del Segura",
+    "tipo": "Asfalto",
+    "localidad": "Formentera Del Segura",
+    "provincia": "Alicante",
+    "distancia": "6K",
+    "precio": "10"
+  },
+  {
+    "id": "r61",
+    "fecha": "22-05-26",
+    "hora": "20:00",
+    "carrera": "VIII Marcha Nocturna 56K y 18K",
+    "tipo": "Mixta",
+    "localidad": "Campos Del Río",
+    "provincia": "Murcia",
+    "distancia": "56K / 18K",
+    "precio": "18-25"
+  },
+  {
+    "id": "r62",
+    "fecha": "23-05-26",
+    "hora": "17:30",
+    "carrera": "XIV Memorial Jose Manuel Zambrana Pleguezuelos",
+    "tipo": "Asfalto",
+    "localidad": "Ibi",
+    "provincia": "Alicante",
+    "distancia": "10K / 5K",
+    "precio": "13-19"
+  },
+  {
+    "id": "r63",
+    "fecha": "23-05-26",
+    "hora": "19:00",
+    "carrera": "I 10K Ermita del Rosario",
+    "tipo": "Asfalto",
+    "localidad": "Los Garres",
+    "provincia": "Murcia",
+    "distancia": "10K / 5K",
+    "precio": "8-15"
+  },
+  {
+    "id": "r64",
+    "fecha": "23-05-26",
+    "hora": "19:00",
+    "carrera": "XVII Carrera Popular Catral",
+    "tipo": "Asfalto",
+    "localidad": "Catral",
+    "provincia": "Alicante",
+    "distancia": "10K / 5K",
+    "precio": "8-11"
+  },
+  {
+    "id": "r65",
+    "fecha": "23-05-26",
+    "hora": "22:00",
+    "carrera": "10K Nocturna de Albacete 2026",
+    "tipo": "Asfalto",
+    "localidad": "Albacete",
+    "provincia": "Albacete",
+    "distancia": "10K",
+    "precio": "15-24"
+  },
+  {
+    "id": "r66",
+    "fecha": "24-05-26",
+    "hora": "09:30",
+    "carrera": "IV 5K & Marcha Solidaria UCAM por la Esclerosis Múltiple",
+    "tipo": "Asfalto",
+    "localidad": "Murcia",
+    "provincia": "Murcia",
+    "distancia": "5K",
+    "precio": "8-10"
+  },
+  {
+    "id": "r67",
+    "fecha": "29-05-26",
+    "hora": "19:00",
+    "carrera": "VI Backyard Los Montesinos",
+    "tipo": "Asfalto",
+    "localidad": "Los Montesinos",
+    "provincia": "Alicante",
+    "distancia": "Varias",
+    "precio": "55"
+  },
+  {
+    "id": "r68",
+    "fecha": "30-05-26",
+    "hora": "21:00",
+    "carrera": "III Trail Nocturno Castillo de Cox",
+    "tipo": "Montaña",
+    "localidad": "Cox",
+    "provincia": "Alicante",
+    "distancia": "11K / 7K",
+    "precio": "15-25"
+  },
+  {
+    "id": "r69",
+    "fecha": "31-05-26",
+    "hora": "09:00",
+    "carrera": "XV Cross Subida al Monte Calvario",
+    "tipo": "Mixta",
+    "localidad": "Cartagena",
+    "provincia": "Murcia",
+    "distancia": "10K",
+    "precio": "12-18"
+  },
+  {
+    "id": "r70",
+    "fecha": "31-05-26",
+    "hora": "10:00",
+    "carrera": "XIV Run for Parkinson's Murcia",
+    "tipo": "Asfalto",
+    "localidad": "Murcia",
+    "provincia": "Murcia",
+    "distancia": "10K / 5K",
+    "precio": "3-10"
+  },
+  {
+    "id": "r71",
+    "fecha": "06-06-26",
+    "hora": "18:30",
+    "carrera": "XII Pinatarius Obstaculum Cursus",
+    "tipo": "Obstáculos",
+    "localidad": "San Pedro Del Pinatar",
+    "provincia": "Murcia",
+    "distancia": "7K",
+    "precio": "27-30"
+  },
+  {
+    "id": "r72",
+    "fecha": "06-06-26",
+    "hora": "21:30",
+    "carrera": "XII Carrera Nocturna de Murcia",
+    "tipo": "Asfalto",
+    "localidad": "Murcia",
+    "provincia": "Murcia",
+    "distancia": "10K / 5K",
+    "precio": "11-22"
+  },
+  {
+    "id": "r73",
+    "fecha": "13-06-26",
+    "hora": "18:30",
+    "carrera": "14ª Trail de Montaña Les Xosses de Crevillent",
+    "tipo": "Montaña",
+    "localidad": "Crevillent",
+    "provincia": "Alicante",
+    "distancia": "18.5K / 13.5K",
+    "precio": "23-26"
+  },
+  {
+    "id": "r74",
+    "fecha": "13-06-26",
+    "hora": "18:45",
+    "carrera": "XII Cross Paraíso Xtrem",
+    "tipo": "Mixta",
+    "localidad": "La Manga",
+    "provincia": "Murcia",
+    "distancia": "7K",
+    "precio": "6-16"
+  },
+  {
+    "id": "r75",
+    "fecha": "04-07-26",
+    "hora": "20:00",
+    "carrera": "XVI Aidemarcha",
+    "tipo": "Asfalto",
+    "localidad": "San Javier",
+    "provincia": "Murcia",
+    "distancia": "5K / 3K",
+    "precio": "5-10"
+  },
+  {
+    "id": "r76",
+    "fecha": "08-08-26",
+    "hora": "20:00",
+    "carrera": "IV CARREBIRRAS MIL PALMERAS",
+    "tipo": "Asfalto",
+    "localidad": "Pilar De La Horadada",
+    "provincia": "Alicante",
+    "distancia": "6K",
+    "precio": "12"
+  },
+  {
+    "id": "r77",
+    "fecha": "12-09-26",
+    "hora": "08:00",
+    "carrera": "IV Backyard Ultra Cartagena",
+    "tipo": "Mixta",
+    "localidad": "Cartagena",
+    "provincia": "Murcia",
+    "distancia": "Varias",
+    "precio": "75"
+  },
+  {
+    "id": "r78",
+    "fecha": "27-09-26",
+    "hora": "08:00",
+    "carrera": "IV Copa Trail de Paterna del Madera",
+    "tipo": "Montaña",
+    "localidad": "Paterna Del Madera",
+    "provincia": "Albacete",
+    "distancia": "34K",
+    "precio": "16-22"
+  },
+  {
+    "id": "r79",
+    "fecha": "03-10-26",
+    "hora": "06:00",
+    "carrera": "90K Camino de la Cruz Murcia-Caravaca 2026",
+    "tipo": "Mixta",
+    "localidad": "Murcia-Caravaca",
+    "provincia": "Murcia",
+    "distancia": "91K / 42K / 21K",
+    "precio": "25-70"
+  },
+  {
+    "id": "r80",
+    "fecha": "03-10-26",
+    "hora": "17:00",
+    "carrera": "IV Media Maratón, 10K y 5K de Archena",
+    "tipo": "Asfalto",
+    "localidad": "Archena",
+    "provincia": "Murcia",
+    "distancia": "21K / 10K / 5K",
+    "precio": "5–29"
+  },
+  {
+    "id": "r81",
+    "fecha": "12-10-26",
+    "hora": "07:00",
+    "carrera": "XI Cresta del Gallo Running Day",
+    "tipo": "Montaña",
+    "localidad": "Los Garres",
+    "provincia": "Murcia",
+    "distancia": "12K",
+    "precio": "15-25"
+  },
+  {
+    "id": "r82",
+    "fecha": "08-11-26",
+    "hora": "09:00",
+    "carrera": "III Carrera Benemérita Urban EVT Guardia Civil",
+    "tipo": "Asfalto",
+    "localidad": "Alcantarilla",
+    "provincia": "Murcia",
+    "distancia": "6K",
+    "precio": "0-12"
+  },
+  {
+    "id": "r83",
+    "fecha": "08-11-26",
+    "hora": "09:00",
+    "carrera": "VI Gran Carrera del Mediterráneo",
+    "tipo": "Asfalto",
+    "localidad": "Alicante-Santa Pola",
+    "provincia": "Alicante",
+    "distancia": "21K",
+    "precio": "25-40"
+  },
+  {
+    "id": "r84",
+    "fecha": "15-11-26",
+    "hora": "08:30",
+    "carrera": "III Copa Trail Villaverde de Guadalimar - La Sarga Sky Race",
+    "tipo": "Montaña",
+    "localidad": "Villaverde De Guadalimar",
+    "provincia": "Albacete",
+    "distancia": "30K",
+    "precio": "16-22"
+  },
+  {
+    "id": "r85",
+    "fecha": "15-11-26",
+    "hora": "10:30",
+    "carrera": "XXIII Cross de la Artillería",
+    "tipo": "Mixta",
+    "localidad": "Cartagena",
+    "provincia": "Murcia",
+    "distancia": "14K / 6K",
+    "precio": "7-20"
+  }
+];
+
+  const pad2 = (n) => String(n).padStart(2,'0');
+  const toISOFromDDMMYY = (ddmmyy) => {
+    const parts = ddmmyy.split(/[-/]/).map(s=>s.trim());
+    const [dd,mm,yy]=parts;
+    const year = Number(yy) < 100 ? 2000 + Number(yy) : Number(yy);
+    return `${year}-${pad2(mm)}-${pad2(dd)}`;
+  };
+  const formatHuman = (iso) => {
+    const [y,m,d]=iso.split('-').map(Number);
+    const dt = new Date(y, m-1, d);
+    return dt.toLocaleDateString('es-ES',{weekday:'short', year:'numeric', month:'short', day:'numeric'});
+  };
+  const parseKmValues = (distanceRaw) => {
+    if(!distanceRaw) return [];
+    const raw = String(distanceRaw)
+      .replaceAll(',', '.')
+      .replaceAll('KM','K')
+      .replaceAll('km','K')
+      .replaceAll('Km','K');
+    const values = [];
+    const re = /(^|[^0-9.])([0-9]{1,3}(?:\.[0-9]{1,3})?)\s*K(?![a-zA-Z])/g;
+    let m;
+    while((m=re.exec(raw))!==null){
+      const v = Number(m[2]);
+      if(Number.isFinite(v)) values.push(v);
+    }
+    const dedup=[];
+    for(const v of values){
+      if(!dedup.some(x=>Math.abs(x-v)<0.05)) dedup.push(v);
+    }
+    return dedup.sort((a,b)=>a-b);
+  };
+  const anyKmWithin = (kms, minKm, maxKm) => (kms||[]).some(k => k>=minKm && k<=maxKm);
+
+  const state = {
+    query: '', surface:'all', province:'all',
+    targetKm:6.0, rangeMin:4.0, rangeMax:8.0,
+    fromIso:'', toIso:'',
+    view:'table'
+  };
+
+  const el = {
+    q: document.getElementById('q'),
+    surface: document.getElementById('surface'),
+    province: document.getElementById('province'),
+    from: document.getElementById('from'),
+    to: document.getElementById('to'),
+    rMin: document.getElementById('rMin'),
+    rMax: document.getElementById('rMax'),
+    rangeLabel: document.getElementById('rangeLabel'),
+    badgeObjective: document.getElementById('badgeObjective'),
+
+    tbody: document.getElementById('tbody'),
+    cards: document.getElementById('cards'),
+    resultsBadge: document.getElementById('resultsBadge'),
+
+    sTotal: document.getElementById('sTotal'),
+    sMatch: document.getElementById('sMatch'),
+    sSimilar: document.getElementById('sSimilar'),
+    sCoverage: document.getElementById('sCoverage'),
+    coverageHint: document.getElementById('coverageHint'),
+
+    tabTable: document.getElementById('tabTable'),
+    tabCards: document.getElementById('tabCards'),
+    viewTable: document.getElementById('viewTable'),
+    viewCards: document.getElementById('viewCards'),
+
+    btnReset: document.getElementById('btnReset'),
+  };
+
+  const populateSurfaces = () => {
+    SURFACES.forEach(s => {
+      const op = document.createElement('option'); op.value=s; op.textContent=s;
+      el.surface.appendChild(op);
+    });
+  };
+
+  const populateProvinces = () => {
+    const cur = el.province.value;
+    el.province.innerHTML = '<option value="all">Todas</option>';
+    const set = new Set(seedRaces.map(r=>r.provincia).filter(Boolean));
+    [...set].sort((a,b)=>a.localeCompare(b)).forEach(p => {
+      const op = document.createElement('option'); op.value=p; op.textContent=p;
+      el.province.appendChild(op);
+    });
+    if([...el.province.options].some(o=>o.value===cur)) el.province.value=cur;
+  };
+
+  const enrich = (r) => {
+    const iso = toISOFromDDMMYY(r.fecha);
+    const kms = parseKmValues(r.distancia);
+    const similar = anyKmWithin(kms, state.rangeMin, state.rangeMax);
+    return {...r, iso, kms, similar};
+  };
+
+  const sortByDate = (a,b) => {
+    if(a.iso && b.iso && a.iso!==b.iso) return a.iso.localeCompare(b.iso);
+    return String(a.hora||"").localeCompare(String(b.hora||""));
+  };
+
+  const getEnriched = () => seedRaces.map(enrich).sort(sortByDate);
+
+  const getFiltered = (enriched) => {
+    const q = state.query.trim().toLowerCase();
+    return enriched.filter(r => {
+      if(state.surface!=='all' && r.tipo!==state.surface) return false;
+      if(state.province!=='all' && r.provincia!==state.province) return false;
+      if(state.fromIso && r.iso && r.iso < state.fromIso) return false;
+      if(state.toIso && r.iso && r.iso > state.toIso) return false;
+      if(!r.similar) return false;
+      if(q){
+        const blob = `${r.carrera} ${r.localidad} ${r.provincia} ${r.tipo} ${r.distancia} ${r.precio}`.toLowerCase();
+        if(!blob.includes(q)) return false;
+      }
+      return true;
+    });
+  };
+
+  const renderStats = (enriched, filtered) => {
+    el.sTotal.textContent = enriched.length;
+    el.sMatch.textContent = filtered.length;
+    el.sSimilar.textContent = enriched.filter(r=>r.similar).length;
+    el.resultsBadge.textContent = `${filtered.length} carreras`;
+
+    if(enriched.length){
+      const first = enriched[0];
+      const last = enriched[enriched.length-1];
+      el.sCoverage.textContent = `${first.fecha} → ${last.fecha}`;
+      el.coverageHint.textContent = `Cobertura detectada en el fichero: ${first.fecha} a ${last.fecha} (solo filas completas).`;
+    } else {
+      el.sCoverage.textContent='-';
+      el.coverageHint.textContent='No se han encontrado filas completas con los criterios indicados.';
+    }
+  };
+
+  const renderTable = (rows) => {
+    el.tbody.innerHTML = '';
+    if(rows.length===0){
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan=6;
+      td.style.padding='18px';
+      td.style.textAlign='center';
+      td.className='muted';
+      td.textContent = 'No hay resultados con estos filtros. Prueba a ampliar el rango de distancia o limpiar fechas.';
+      tr.appendChild(td);
+      el.tbody.appendChild(tr);
+      return;
+    }
+
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+
+      const tdFecha = document.createElement('td');
+      tdFecha.innerHTML = `<div style="font-weight:900">${formatHuman(r.iso)}</div><div class="muted">${escapeHtml(r.hora||'')}</div>`;
+
+      const tdCarrera = document.createElement('td');
+      tdCarrera.innerHTML = `<div class="raceTitle">${escapeHtml(r.carrera||'')}</div><div class="muted">${escapeHtml(r.localidad||'')} · ${escapeHtml(r.provincia||'')}</div>`;
+
+      const tdTipo = document.createElement('td');
+      tdTipo.textContent = r.tipo || '';
+
+      const tdLugar = document.createElement('td');
+      tdLugar.textContent = r.localidad || '';
+
+      const tdDist = document.createElement('td');
+      tdDist.innerHTML = `<div>${escapeHtml(r.distancia||'')}</div>${(r.kms && r.kms.length) ? `<div class="muted">km: ${r.kms.map(k=>k.toFixed(1)).join(', ')}</div>` : ''}`;
+
+      const tdPrecio = document.createElement('td');
+      tdPrecio.textContent = r.precio || '';
+
+      [tdFecha, tdCarrera, tdTipo, tdLugar, tdDist, tdPrecio].forEach(td=>tr.appendChild(td));
+      el.tbody.appendChild(tr);
+    });
+  };
+
+  const renderCards = (rows) => {
+    el.cards.innerHTML='';
+    if(rows.length===0){
+      const div = document.createElement('div');
+      div.className='card';
+      div.style.padding='16px';
+      div.innerHTML = `<div class="muted" style="text-align:center">No hay resultados con estos filtros.</div>`;
+      el.cards.appendChild(div);
+      return;
+    }
+
+    rows.forEach(r => {
+      const c = document.createElement('div');
+      c.className='card';
+      c.style.padding='14px';
+      c.innerHTML = `
+        <div class="muted">${formatHuman(r.iso)} · ${escapeHtml(r.hora||'')}</div>
+        <div class="raceTitle" style="margin-top:4px">${escapeHtml(r.carrera||'')}</div>
+        <div class="muted" style="margin-top:6px">${escapeHtml(r.localidad||'')} · ${escapeHtml(r.provincia||'')}</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px">
+          <span class="badge secondary">${escapeHtml(r.tipo||'')}</span>
+          <span class="badge secondary">${escapeHtml(r.distancia||'')}</span>
+          <span class="badge">€ ${escapeHtml(r.precio||'')}</span>
+        </div>
+      `;
+      el.cards.appendChild(c);
+    });
+  };
+
+  const render = () => {
+    populateProvinces();
+    const enriched = getEnriched();
+    const filtered = getFiltered(enriched);
+    renderStats(enriched, filtered);
+    renderTable(filtered);
+    renderCards(filtered);
+    el.badgeObjective.textContent = `Objetivo: ${state.targetKm.toFixed(1)} km`;
+    el.rangeLabel.textContent = `${Math.min(state.rangeMin,state.rangeMax).toFixed(1)}–${Math.max(state.rangeMin,state.rangeMax).toFixed(1)} km`;
+  };
+
+  // Events
+  el.q.addEventListener('input', e => {state.query = e.target.value; render();});
+  el.surface.addEventListener('change', e => {state.surface = e.target.value; render();});
+  el.province.addEventListener('change', e => {state.province = e.target.value; render();});
+  el.from.addEventListener('change', e => {state.fromIso = e.target.value; render();});
+  el.to.addEventListener('change', e => {state.toIso = e.target.value; render();});
+
+  const commitRange = () => {
+    const a = Number(el.rMin.value); const b = Number(el.rMax.value);
+    state.rangeMin = Math.min(a,b);
+    state.rangeMax = Math.max(a,b);
+    el.rangeLabel.textContent = `${state.rangeMin.toFixed(1)}–${state.rangeMax.toFixed(1)} km`;
+    render();
+  };
+  el.rMin.addEventListener('input', commitRange);
+  el.rMax.addEventListener('input', commitRange);
+
+  document.querySelectorAll('button[data-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = Number(btn.getAttribute('data-target'));
+      state.targetKm = t;
+      state.rangeMin = Math.max(0.5, t-2);
+      state.rangeMax = t+2;
+      el.rMin.value = state.rangeMin.toFixed(1);
+      el.rMax.value = state.rangeMax.toFixed(1);
+      document.querySelectorAll('button[data-target]').forEach(b=>b.classList.remove('primary'));
+      btn.classList.add('primary');
+      render();
+    });
+  });
+
+  const setView = (v) => {
+    state.view = v;
+    if(v==='table'){
+      el.tabTable.classList.add('active'); el.tabCards.classList.remove('active');
+      el.viewTable.style.display='block'; el.viewCards.style.display='none';
+    } else {
+      el.tabCards.classList.add('active'); el.tabTable.classList.remove('active');
+      el.viewCards.style.display='block'; el.viewTable.style.display='none';
+    }
+  };
+  el.tabTable.onclick = ()=>setView('table');
+  el.tabCards.onclick = ()=>setView('cards');
+
+  el.btnReset.onclick = () => {
+    state.query=''; state.surface='all'; state.province='all';
+    state.fromIso=''; state.toIso='';
+    state.targetKm=6.0; state.rangeMin=4.0; state.rangeMax=8.0;
+
+    el.q.value=''; el.surface.value='all'; el.province.value='all';
+    el.from.value=''; el.to.value='';
+    el.rMin.value='4.0'; el.rMax.value='8.0';
+    document.querySelectorAll('button[data-target]').forEach(b=>b.classList.remove('primary'));
+    const btn6 = document.querySelector('button[data-target="6"]');
+    if(btn6) btn6.classList.add('primary');
+    render();
+  };
+
+  function escapeHtml(s){
+    return String(s??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+  }
+
+  populateSurfaces();
+  el.surface.value = 'all';
+  el.province.value = 'all';
+  render();
+})();
+</script>
+</body>
+</html>
